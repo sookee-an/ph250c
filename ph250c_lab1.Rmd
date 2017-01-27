@@ -1,0 +1,152 @@
+---
+title: "ph250c_lab1"
+author: "Sookee An"
+date: "January 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Agenda: 
+1.	Announcements
+2.	R training
+3.	Exercise
+
+Announcements:
+•	There will be no discussion section next week (Friday 2/3), due to the Division of Epidemiology retreat. 
+•	I have posted several R cheat sheets in the folder “099. Introduction to R”. You may find them helpful.
+•	Homework groups: if you plan to complete your homework in groups, we recommend that you start forming them. There is a maximum of 3 people per homework group. If you would like to work with others, and are having trouble finding partners, please let us know so we can facilitate.
+•	Any questions on course logistics?
+•	Any questions on the lecture material we have covered thus far?
+•	Has everyone been able to download and open R? 
+
+R training
+We will spend some time covering a few more R concepts that you will need for the exercise below, and for future R homework. The materials presented in this section are available on bcourses under “Files/098. Labs/2017.01.27”
+
+Exercise
+Your task is to apply your knowledge of R to read in, manipulate, and summarize a dataset using the “tableone” package. The steps in this exercise will guide you through the process. 
+
+1.	In the bcourses folder for today's lab, find and download the Framingham dataset. Save the dataset in a folder that you will use for today's lab.
+
+2.	Open an R or Rstudio session and a blank R script. Give your script a header, using comments, and save your R script in the folder for today's lab. 
+
+3.	Set your working directory, and read in the Framingham dataset you downloaded. Think about what type of file the dataset is, and about any packages you might (or might not) need to install or load. Once you think you've loaded the data, check what's in your workspace to make sure it's there. 
+```{r}
+setwd("/Users/sookee/Google Drive/PH250C")
+load("frmgham_recoded.Rdata")
+```
+
+4.	The name of the data frame we've just loaded is super long, and we're going to have to type it a lot. Assign the Framingham dataset to a new data frame called "df", then delete the old one. 
+```{r}
+df <-frmgham_recoded
+rm(frmgham_recoded)
+```
+
+5.	Have a look at your data, using some of the commands we've learned so far. Also try printing a character vector that contains just the variable names.  
+```{r}
+head(df)
+tail(df)
+
+var <- as.character(colnames(df))
+var
+```
+
+6.	The "Table 1" for many research papers provides descriptive statistics on the study participants, often by exposure groups. We will create such a table for the Framingham data using the "tableone" package, which makes this process easier, and gives us a chance to practice some of our R skills. Install and then load the "tableone" package. (Note: new versions of the R software are posted frequently. You don't always need to update to the newest version of R right away, but every now and then, it's a good idea to check if a new version is available, and if it is, to install it. If a package you load was created under a different version of R than the one you're currently running, you may get a warning message. This message is usually not one you need to worry about.)
+```{r}
+library(tableone) 
+```
+
+
+7.	The tableone package requires that the data and the function input be formatted in a particular way. We'll walk you through it. First, create a character vector named "vars" that contains the names of the variables that we will put in our Table 1: age, sex, educ, and bmi_cat. 
+```{r}
+vars <- c("age","sex","educ","bmi_cat")
+```
+
+8.	The variables "educ" and "bmi" are numeric variables in the Framingham dataset, but the numbers actually represent categories. Convert the "educ" variable to a string variable, and replace the values "1", "2", "3", and "4", with "0-11 years", "High School", "Some College", and "College or more", respectively. Then convert "bmi_cat" to a string variable, and replace the values "1", "2", "3", and "4", with "<18.5", "18.5-24.9", "25.0-29.9", and ">=30.0". Then convert the educ and bmi_cat variables to factor variables, and create a character vector named "factorVars" that contains the names of these two factor variables. (Note: Watch out for the type of quotation marks you’re using in your code. Sometimes when copying and pasting from other sources, you’ll end up with curly braces like “these” or ‘these’ which R does not like. Be sure your code has straight quotation marks like "these" or 'these'. )
+```{r}
+df_temp <- df
+df_temp$educ <- as.character(df_temp$educ)
+df_temp$educ[df_temp$educ=="1"] <- "0-11 years"
+df_temp$educ[df_temp$educ=="2"] <- "High School"
+df_temp$educ[df_temp$educ=="3"] <- "Some College"
+df_temp$educ[df_temp$educ=="4"] <- "College or more"
+
+df_temp$bmi_cat <- as.character(df_temp$bmi_cat)
+df_temp$bmi_cat[df_temp$bmi_cat=="1"] <- "<18.5"
+df_temp$bmi_cat[df_temp$bmi_cat=="2"] <- "18.5-24.9"
+df_temp$bmi_cat[df_temp$bmi_cat=="3"] <- "25.0-29.9"
+df_temp$bmi_cat[df_temp$bmi_cat=="4"] <- ">=30.0"
+
+df_temp$educ <- as.factor(df_temp$educ)
+df_temp$bmi_cat <- as.factor(df_temp$bmi_cat)
+
+factorVars <- c("educ","bmi_cat")
+```
+
+9.	Now we can create a basic table 1 using: 
+
+```{r}
+tableOne <- CreateTableOne(vars = vars, data = df_tempb, factorVars = factorVars)
+```
+
+This line creates the table and assigns it to an object called tableOne. Typing the object name will invoke the "print.TableOne" method. 
+
+```{r}
+tableOne
+```
+
+####################################################################################
+How has tableOne handled missingness in the variables of interest?
+ - It did not include them in the tables
+ 
+Bonus: What might you do if you wanted the missing values to be treated differently?
+ - ?????I do not know. 
+
+####################################################################################
+
+
+10.	Now let's assume that the exposure of interest in our study is current smoking-- the variable "cursmoke". We can make a Table 1, stratified by current smoking status, using the following syntax:
+```{r}
+tableOne <- CreateTableOne(vars = vars, strata = "cursmoke", data = df_temp, factorVars = factorVars)
+
+tableOne
+```
+Note that the table 1 now includes statistical tests. By default, these are t-tests for continuous variables and chi-square tests for categorical. Also note that since we assigned this new table 1 to an object with the same name as the table 1 we created in #9, we have overwritten the old table with the new table. 
+
+11.	The object "tableOne" we've created is a particular type of object. Find out what type it is. (Hint: how would you determine what type of data (numeric, character, etc.) is in a vector?)
+```{r}
+class(tableOne)
+```
+
+
+
+12.	This special type of object is made up of several pieces. Find out the names of each piece using "names()", then print each piece to the screen separately. This can come in handy when you only want to use certain parts of the table.
+```{r}
+names(tableOne)
+```
+
+13.	Use the summary() function on just the categorical portion of your table 1, and then just the continuous variables portion of your table. What additional information does it give you?
+```{r}
+summary(tableOne$ContTable)
+summary(tableOne$CatTable)
+```
+summary() gives detailed information from tests run with the continuous and categorical variables. 
+
+14.	If any of your continuous variables are skewed, or any of your categorical variables have small cells, you might want to use statistical tests other than t-tests or chi-square. Our data are fine, but supposing they weren't... run the code below. What statistical tests is it doing on age and education instead? How would you find out? Why is the p-value for the educ variable missing?
+
+```{r}
+print(tableOne, nonnormal = c("age"), exact = c("educ"))
+```
+
+?????????I don't know.
+
+15.	To save your table 1 to a ".csv" file, you'll need to write the "print(tableOne)" object, not just the "tableOne" object. Save your table to a csv, and then open it up in excel to make sure it exported correctly. 
+```{r}
+table1 <- print(tableOne)
+ write.csv(table1, file="table1.csv", row.names=F)
+```
+
+You're done! Good work!
